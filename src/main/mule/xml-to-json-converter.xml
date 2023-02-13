@@ -8,6 +8,9 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="2e4a0723-f27c-40a6-9cde-f6a2ea0061d6" >
 		<http:listener-connection host="0.0.0.0" port="8081" />
 	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="a65a41ae-870d-42f1-b8cc-077781db6114" >
+		<http:request-connection host="postman-echo.com" />
+	</http:request-config>
 	<flow name="xml-to-json-converterFlow" doc:id="3eeccfb2-099b-4031-b98d-a1215cc19547" >
 		<http:listener doc:name="Listener" doc:id="8e994808-4935-43e3-9e40-fe3c87baef08" config-ref="HTTP_Listener_config" path="/convert"/>
 		<logger level="INFO" doc:name="Logger" doc:id="000097e2-5cb6-4737-ac9c-ea2e4931977f" message='#[%dw 2.0&#10;output application/xml&#10;---&#10;payload]'/>
@@ -20,5 +23,23 @@ payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 		<logger level="INFO" doc:name="Logger" doc:id="e13564d8-7dbf-4287-b6d1-2b03883363c6" message='#["after transformation" : payload]'/>
+	</flow>
+	<flow name="xml-to-json-converterFlow1" doc:id="acc96f68-9d6e-4ae1-9f8f-414c3f284e2b" >
+		<http:listener doc:name="Listener" doc:id="2d12b019-4a96-4b8e-9f58-5c59d00a270b" config-ref="HTTP_Listener_config" path="/health"/>
+		<http:request method="GET" doc:name="Request" doc:id="54aed064-8f41-46b6-b7ad-679cc9ef8310" config-ref="HTTP_Request_configuration" path="/get" sendCorrelationId="ALWAYS" correlationId="#[correlationId]">
+			<http:body ><![CDATA[#[{
+	"foo" : "bar"
+}]]]></http:body>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="6ef0b8d8-adc7-468c-8221-28c5fd9c070a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status" : if (attributes.statusCode>200) "Not Alive" else "Alive"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
 	</flow>
 </mule>
